@@ -51,6 +51,6 @@ def inferenceCon(target_joints,vnect_dic,ConNet,img_size,seqence_len,vnect_file_
 
     all_con_prediction=np.array(all_con_prediction)  
     all_sta_prediction=np.array(all_sta_prediction)
-    np.save(save_path+'pred_con.npy',all_con_prediction)
-    np.save(save_path+'pred_sta.npy',all_sta_prediction)   
+    np.save(save_path+'contacts.npy',all_con_prediction) #contact
+    np.save(save_path+'stationary.npy',all_sta_prediction) #stationary
     return 0

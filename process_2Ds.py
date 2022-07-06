@@ -18,14 +18,33 @@ def vnect_mdd_loader(filename):
     content = np.array([ x.strip().split("," ) for x in content][1:])
     content = np.array([ np.array(list(map(float,x)))  for x in content] )[:,1:].reshape(len(content),-1,2)
     return content
- 
+
+def vnect_motion_loader(filename):
+    with open(filename) as f:
+        content = f.readlines() 
+    content = np.array([x.strip().split(" ") for x in content])[1:]
+
+    cleaned_pose = []
+
+    for line in content:
+        test = np.array([float(x) for x in line if not x == ""])[1:]
+        cleaned_pose.append(test.tolist())
+    cleaned_pose = np.array(cleaned_pose).T
+
+    return cleaned_pose
+
 
 def main(input_path,output_folder,smoothing):
-    data = vnect_mdd_loader(input_path)
-    if smoothing:
-        data = vnect_smoothing(data)
-    np.save(output_folder+"vnect_2ds.npy",data)
-    return 0
+    if input_path.endswith('mdd'):
+        data = vnect_mdd_loader(input_path)
+        if smoothing:
+            data = vnect_smoothing(data)
+        np.save(output_folder+"vnect_2ds.npy", data)
+    elif input_path.endswith('motion'):
+        data = vnect_motion_loader(input_path)
+        np.save(output_folder+"vnect_motions.npy", data)
+    else:
+        return 1
 
 if __name__ == '__main__':
 

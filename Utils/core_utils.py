@@ -195,7 +195,7 @@ class Core_utils():
             return 0
 
 
-class LabelMotionGetter():
+class LabelMotionGetter(): ###get motion, motion.motion used###
     def __init__(self,skeleton_filename,motion_filename,jointNames,offset):
         self.skeleton_filename = skeleton_filename
         self.motion_filename = motion_filename

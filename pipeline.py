@@ -23,8 +23,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', default='./results/')
     args = parser.parse_args()
 
-    ### Contact and Stationary Estimation ###
-    if args.contact_estimation:
+    ### Contact and Stationary Estimation ### don't need floor
+    if args.contact_estimation: #if Ture, run stage two, vnect_2d used. (VNect uses a different joints index, see https://github.com/XinArkh/VNect)
         target_joints = ["head", "neck", "left_hip",  "left_knee", "left_ankle", "left_toe",  "right_hip", "right_knee", "right_ankle", "right_toe",  "left_shoulder", "left_elbow", "left_wrist", "right_shoulder", "right_elbow", "right_wrist"]
         vnect_dic = {"base": 14, "head": 0, "neck": 1, "left_hip": 11, "left_knee": 12, "left_ankle": 13, "left_toe": 16,"right_hip": 8,  "right_knee": 9, "right_ankle": 10, "right_toe": 15, "left_shoulder": 5, "left_elbow": 6, "left_wrist": 7,  "right_shoulder": 2, "right_elbow": 3, "right_wrist": 4 }
         window_size=10  
