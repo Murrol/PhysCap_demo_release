@@ -26,7 +26,7 @@ class KinematicUtil():
             jointType = info[2]
             jointIdsAll.append(j)
             jointNamesAll.append(jointName)
-            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE): #joints with dofs
                 jointIds.append(j)
                 jointNames.append(jointName)
         return jointIdsAll, jointNamesAll, jointIds, jointNames

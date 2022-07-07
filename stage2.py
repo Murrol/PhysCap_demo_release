@@ -21,7 +21,7 @@ def inferenceCon(target_joints,vnect_dic,ConNet,img_size,seqence_len,vnect_file_
     all_con_prediction=[] 
     all_sta_prediction=[] 
     vnect_2Ds = torch.FloatTensor(np.load(vnect_file_path )) 
-    vnect2gt = [vnect_dic[key] for key in target_joints]
+    vnect2gt = [vnect_dic[key] for key in target_joints] #length 16
     vnect_2Ds = vnect_2Ds[:, vnect2gt, :]
     vnect_2Ds = vnect_smoothing(vnect_2Ds)
     vnect_2D_bases = torch.FloatTensor(np.load(vnect_file_path )[:, vnect_dic['base']])
@@ -34,16 +34,16 @@ def inferenceCon(target_joints,vnect_dic,ConNet,img_size,seqence_len,vnect_file_
 
     for i  in range(len(vnect_rr_2Ds)):
  
-        if i<seqence_len-1: 
+        if i<seqence_len-1: #at the begining
             n_pad = seqence_len-len(vnect_rr_2Ds[:i+1]) 
             pad  = vnect_rr_2Ds[0].view(1,n_j,c).expand(n_pad,-1,-1) 
             seq = torch.cat((pad,vnect_rr_2Ds[:i+1]),0).view(1,seqence_len,n_j,c)
-        else:  
-            seq = vnect_rr_2Ds[i-seqence_len+1:i+1].view(1,seqence_len,n_j,c)
+        else:  #normal flow
+            seq = vnect_rr_2Ds[i-seqence_len+1:i+1].view(1,seqence_len,n_j,c) #(1,10,16,2)
     
         seq=seq.cuda()   
-        pred_labels = ConNet(seq.view(1,seqence_len,-1)) 
-        pred_labels = pred_labels.detach().clone().cpu().numpy()
+        pred_labels = ConNet(seq.view(1,seqence_len,-1)) #(1,10,32)
+        pred_labels = pred_labels.detach().clone().cpu().numpy() #(1,5)
         pred_labels[pred_labels < 0.5] = 0
         pred_labels[pred_labels >= 0.5] = 1 
         all_con_prediction.append(pred_labels[:,:-1])

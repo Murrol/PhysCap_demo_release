@@ -25,11 +25,13 @@ def sim_loop(path_dict,floor_known=0):
      
     model = rbdl.loadModel(path_dict["humanoid_path"].encode())
     model.gravity = np.array([0., -9.81, 0.])
-    id_robot = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False)
-    id_robot_vnect = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False)
+    id_robot = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False) #optimizing
+    id_robot_vnect = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False) #init kinematic
     skeleton_specific_base_offset =  np.array([-2.35437, -237.806, 26.4052])
     _, _, jointIds, jointNames = kui.get_jointIds_Names(id_robot)
+
     LMG = LabelMotionGetter(path_dict["skeleton_filename"],path_dict["motion_filename"], jointNames, skeleton_specific_base_offset)
+    
     la_po_dic = LMG.get_dictionary() 
     if floor_known:
         floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
@@ -37,7 +39,7 @@ def sim_loop(path_dict,floor_known=0):
     ini = Initializer(floor_known,path_dict["floor_frame"])
     ini.remove_collisions(id_robot,id_robot_vnect) 
     
-    rbdl_ids = {"l_ankle": 8, "l_toe": 11, "l_heel": 12, "r_ankle": 17, "r_toe": 21, "r_heel": 22}
+    rbdl_ids = {"l_ankle": 8, "l_toe": 11, "l_heel": 12, "r_ankle": 17, "r_toe": 21, "r_heel": 22} #flip from smpl index?
     
     contact_flags = np.load(path_dict["contact_path"])
     stationary_flags = np.load(path_dict["stationary_path"])
@@ -93,7 +95,7 @@ def sim_loop(path_dict,floor_known=0):
         q_ref = LMG.dic2numpy_direct(count + 1, la_po_dic, jointNames) 
         target_com, target_base_ori = LMG.get_base_motion(count + 1, la_po_dic,   trans_scale=0.001)
         target_base_ori_original = copy.copy(target_base_ori)
-        target_com += skeleton_specific_base_offset / scale
+        target_com += skeleton_specific_base_offset / scale #scale from mm to m
 
 
         ### transform into world corrdinate

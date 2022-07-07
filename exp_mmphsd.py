@@ -1,28 +1,43 @@
+import joblib
+import numpy as np
 import os
 from stage3 import sim_loop
 from models.networks import ContactEstimationNetwork
 import argparse
 from stage2 import inferenceCon
 import torch
+
+
 if __name__ == '__main__':
 
     ### config for fitting and contact calculations ###
     parser = argparse.ArgumentParser(description='arguments for predictions')
     parser.add_argument('--contact_estimation', type=int, default=0)
-    parser.add_argument('--image_size',type=int, default=1024) 
-    parser.add_argument('--floor_known', type=int, default=1)
+    parser.add_argument('--image_size',type=int, default=256)
+    parser.add_argument('--floor_known', type=int, default=0)
     parser.add_argument('--model_path', default="models/ConStaNet_sample.pkl") 
     parser.add_argument('--floor_frame',  default="data/floor_frame.npy") 
-    parser.add_argument('--vnect_2d_path', default="data/sample_vnect_2ds.npy") 
+    # parser.add_argument('--vnect_2d_path', default="data/sample_vnect_2ds.npy") 
     parser.add_argument('--humanoid_path', default='asset/physcap.urdf') 
     parser.add_argument('--skeleton_filename', default="asset/physcap.skeleton" )
-    parser.add_argument('--motion_filename', default="data/sample.motion")
+    # parser.add_argument('--motion_filename', default="data/sample.motion")
     parser.add_argument('--floor_path', default="asset/plane.urdf") 
     parser.add_argument('--contact_path', default="data/sample_contacts.npy") 
     parser.add_argument('--stationary_path', default="data/sample_stationary.npy")
     parser.add_argument('--save_path', default='./results/')
     args = parser.parse_args()
-
+    data_dir = '/home/datassd/yuxuan/data_event_out'
+    action = 'subject01_group1_time1'
+    num_frame = len(os.listdir('%s/pose_events/%s' % (data_dir, action)))
+    theta_list, tran_list, joints2d_list, joints3d_list = [], [], [], []
+    for idx in range(num_frame):
+        beta, theta, tran, joints3d, joints2d = joblib.load(
+                    '%s/pose_events/%s/pose%04i.pkl' % (data_dir, action, idx))
+        theta_list.append(theta)
+        tran_list.append(tran)
+        joints2d_list.append(joints2d)
+        joints3d_list.append(joints3d_list)
+    joints2d
     ### Contact and Stationary Estimation ### don't need floor
     if args.contact_estimation: #if Ture, run stage two, vnect_2d used. (VNect uses a different joints index, see https://github.com/XinArkh/VNect)
         target_joints = ["head", "neck", "left_hip",  "left_knee", "left_ankle", "left_toe",  "right_hip", "right_knee", "right_ankle", "right_toe",  "left_shoulder", "left_elbow", "left_wrist", "right_shoulder", "right_elbow", "right_wrist"]
@@ -42,10 +57,6 @@ if __name__ == '__main__':
         print("Done. Predictions were saved at "+args.save_path)
 
     ### Physics-based Optimization ###
-
-    beta, theta, tran, joints3d, joints2d = joblib.load(
-                '%s/pose_events/%s/pose%04i.pkl' % (self.data_dir, action, end_idx))
-
     path_dict={ 
             "floor_frame":args.floor_frame, 
             "humanoid_path":args.humanoid_path,
@@ -58,4 +69,3 @@ if __name__ == '__main__':
     print("Stage III running ... ") 
     sim_loop(path_dict,floor_known=args.floor_known)
     print("Done. Predictions were saved at "+args.save_path)
-    
