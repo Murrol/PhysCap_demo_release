@@ -260,13 +260,16 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
         scale = 1000
         length = self.motion_params.shape[0]
         root_tran = self.motion_params[:, :3] * scale
+        # print(root_tran)
         smpl_theta = np.reshape(self.motion_params[:, 3:], (-1, 3))
         r = Rot.from_rotvec(smpl_theta)
         euler = r.as_euler('XYZ') #3 characters belonging to the set {‘X’, ‘Y’, ‘Z’} for intrinsic rotations, or {‘x’, ‘y’, ‘z’} for extrinsic rotations
+        # euler = r.as_euler('xyz')
         euler = np.reshape(euler, (length, -1))
         self.pose = np.concatenate((root_tran, euler), axis=1)
         clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
         self.cleaned_pose = self.pose[:, clean_pose_idx].T
+        # self.cleaned_pose[:6, :] = 0. ###for easy visualization in gui without real camera and world space
         # print(self.cleaned_pose.shape)
 
     def _75joints_name_getter(self):
@@ -303,7 +306,7 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
 
     def get_base_motion(self,  frame, la_po_dic, trans_scale):
         ref_base_config = self.dic2numpy(frame, la_po_dic, [b'trans_root_tx', b'trans_root_ty', b'trans_root_tz', b'root_rx', b'root_ry', b'root_rz'])
-        target_com =  ref_base_config[:3]  * trans_scale  
+        target_com =  ref_base_config[:3] / trans_scale  
         target_base_ori = copy.copy(ref_base_config[3:]) 
         return np.array(target_com), np.array(target_base_ori)
 

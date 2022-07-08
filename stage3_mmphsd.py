@@ -22,6 +22,7 @@ def sim_loop(path_dict,floor_known=0):
     CU = Core_utils()
     kui = KinematicUtil() 
     id_simulator = p.connect(p.DIRECT) 
+    # id_simulator = p.connect(p.GUI) 
     p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=1) 
      
     model = rbdl.loadModel(path_dict["humanoid_path"].encode())
@@ -95,7 +96,8 @@ def sim_loop(path_dict,floor_known=0):
     for count in range(n_frames):
   
         q_ref = LMG.dic2numpy_direct(count + 1, la_po_dic, jointNames) 
-        target_com, target_base_ori = LMG.get_base_motion(count + 1, la_po_dic,   trans_scale=0.001)
+        target_com, target_base_ori = LMG.get_base_motion(count + 1, la_po_dic,  trans_scale=scale)
+        
         target_base_ori_original = copy.copy(target_base_ori)
         target_com += skeleton_specific_base_offset / scale #scale from mm to m
 
@@ -108,11 +110,13 @@ def sim_loop(path_dict,floor_known=0):
         judgement = CU.support_polygon_checker(CoM_projected, corners)
         kui.motion_update_specification(id_robot_vnect, jointIds, q_ref)
  
-        target_base_ori,q_ref=rc.ref_motion_correction(id_robot_vnect,count, target_base_ori, target_base_ori_original, judgement, q, q_ref)
-  
+        target_base_ori, q_ref = rc.ref_motion_correction(id_robot_vnect, count, target_base_ori, target_base_ori_original, judgement, q, q_ref)
+        # print(target_base_ori, target_base_ori_original)
         q_ref = q_ref[rbdl2bullet]
         r = Rot.from_euler('zyx', target_base_ori)  
-        mat = r.as_matrix() 
+        mat = r.as_matrix()
+        # print(r.as_euler('xyz', degrees=True))
+        # return
         mat =  np.dot(mat, R) 
         r2 = Rot.from_matrix(mat)
         target_vnect_ori = r2.as_euler('xyz')
@@ -189,6 +193,7 @@ def sim_loop(path_dict,floor_known=0):
             if not os.path.exists(path_dict["save_path"]):
                 os.makedirs(path_dict["save_path"])
             action = '_' + path_dict.get("action", "")
-            np.save(path_dict["save_path"]+'PhyCap_q%s.npy' % action, q_all) 
+            np.save(path_dict["save_path"]+'PhyCap_q%s.npy' % action, q_all)
+            np.save(path_dict["save_path"]+'Ref_q%s.npy' % action, q_ref) 
             print("Prediction Saved.") 
             sys.exit() 

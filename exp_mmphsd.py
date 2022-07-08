@@ -22,8 +22,8 @@ if __name__ == '__main__':
     parser.add_argument('--skeleton_filename', default="asset/physcap.skeleton" )
     # parser.add_argument('--motion_filename', default="data/sample.motion")
     parser.add_argument('--floor_path', default="asset/plane.urdf") 
-    parser.add_argument('--contact_path', default="data/sample_contacts.npy") 
-    parser.add_argument('--stationary_path', default="data/sample_stationary.npy")
+    parser.add_argument('--contact_path', default="results/contacts.npy") 
+    parser.add_argument('--stationary_path', default="results/stationary.npy")
     parser.add_argument('--save_path', default='./results/')
     args = parser.parse_args()
     data_dir = '/home/datassd/yuxuan/data_event_out'

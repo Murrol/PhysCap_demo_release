@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(description='arguments for predictions')
 parser.add_argument('--q_path',  default="./results/PhyCap_q.npy") 
 args = parser.parse_args()
 id_simulator = p.connect(p.GUI)
+# p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=0)
 p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=1)
 p.configureDebugVisualizer(flag=p.COV_ENABLE_SHADOWS, enable=0) 
 
@@ -29,13 +30,15 @@ if __name__ == '__main__':
     ini = Initializer()
     rbdl2bullet=ini.get_rbdl2bullet() 
     kui = KinematicUtil() 
-    qs = data_loader(args.q_path) 
+    qs = data_loader(args.q_path)
+    print(qs.shape)
     humanoid_path='./asset/physcap.urdf'
     model = rbdl.loadModel(humanoid_path.encode())
     id_robot = p.loadURDF(humanoid_path, [0, 0, 0.5], globalScaling=1, useFixedBase=False)
      
     _, _, jointIds, _ = kui.get_jointIds_Names(id_robot)
-    jointIds_reordered = np.array(jointIds)[rbdl2bullet]  
-    for q in qs: 
-        visualizer(id_robot,q)  
-        time.sleep(0.002)
+    jointIds_reordered = np.array(jointIds)[rbdl2bullet]
+    while(p.isConnected()):  
+        for q in qs: 
+            visualizer(id_robot,q)  
+            time.sleep(0.002)
