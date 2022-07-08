@@ -27,7 +27,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', default='./results/')
     args = parser.parse_args()
     data_dir = '/home/datassd/yuxuan/data_event_out'
-    action = 'subject01_group1_time1'
+    action = 'subject01_group1_time2' #'subject01_group1_time1' broken, need to be replaced
     kinematic_2d_path = "data/kinematic_2ds.npy"
     num_frame = len(os.listdir('%s/pose_events/%s' % (data_dir, action))) - 1
     theta_list, tran_list, joints2d_list, joints3d_list = [], [], [], []

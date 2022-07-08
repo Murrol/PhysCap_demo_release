@@ -9,7 +9,8 @@ import copy
 from scipy.spatial.transform import Rotation as Rot  
 from Utils.initialize import Initializer
 import pybullet as p
-from Utils.core_utils import KinematicUtil,angle_util,LabelMotionGetter,Core_utils,RefCorrect
+from Utils.core_utils import KinematicUtil, angle_util, Core_utils,RefCorrect
+from Utils.core_utils import LabelMotionGetter_mmhpsd as LabelMotionGetter
 from Utils.util_opt import RbdlOpt
 warnings.filterwarnings("ignore") 
  
@@ -32,7 +33,8 @@ def sim_loop(path_dict,floor_known=0):
 
     LMG = LabelMotionGetter(path_dict["skeleton_filename"],path_dict["motion_params"], jointNames, skeleton_specific_base_offset)
     
-    la_po_dic = LMG.get_dictionary() 
+    la_po_dic = LMG.get_dictionary()
+    # print(la_po_dic)
     if floor_known:
         floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
     

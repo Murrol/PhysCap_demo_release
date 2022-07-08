@@ -266,15 +266,16 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
         euler = np.reshape(euler, (length, -1))
         self.pose = np.concatenate((root_tran, euler), axis=1)
         clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
-        self.cleaned_pose = self.pose[:, clean_pose_idx]
+        self.cleaned_pose = self.pose[:, clean_pose_idx].T
+        # print(self.cleaned_pose.shape)
 
     def _75joints_name_getter(self):
         with open(self.skeleton_filename) as f:
             content = f.readlines()
         content = np.array([x.strip().split(" ") for x in content])
-        _75joints_names_mess = np.array(content[2:77][np.arange(0, len(content[99:]), 3)[:-1]])
-        self._75joints_names = [x[0] for x in _75joints_names_mess]
-
+        _75joints_names_mess = np.array(content[2:77])
+        self._75joints_names = [x[0] if 'root_t' not in x[0] else 'trans_' + x[0] for x in _75joints_names_mess]
+        
     def dof_name_getter(self):
         with open(self.skeleton_filename) as f:
             content = f.readlines()
