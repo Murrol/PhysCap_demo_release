@@ -20,7 +20,8 @@ def vnect_smoothing(vnect_2Ds):
 def inferenceCon(target_joints,vnect_dic,ConNet,img_size,seqence_len,vnect_file_path,save_path):
     all_con_prediction=[] 
     all_sta_prediction=[] 
-    vnect_2Ds = torch.FloatTensor(np.load(vnect_file_path )) 
+    vnect_2Ds = torch.FloatTensor(np.load(vnect_file_path))
+    # print(vnect_2Ds.shape)
     vnect2gt = [vnect_dic[key] for key in target_joints] #length 16
     vnect_2Ds = vnect_2Ds[:, vnect2gt, :]
     vnect_2Ds = vnect_smoothing(vnect_2Ds)

@@ -1,13 +1,13 @@
 import joblib
 import numpy as np
 import os
-from stage3 import sim_loop
+from stage3_mmphsd import sim_loop
 from models.networks import ContactEstimationNetwork
 import argparse
 from stage2 import inferenceCon
 import torch
 
-
+###to run: python exp_mmphsd.py --contact_estimation 1 --save_path './results/' --floor_known 0 --humanoid_path asset/physcap.urdf --skeleton_filename asset/physcap.skeleton --contact_path results/contacts.npy --stationary_path results/stationary.npy
 if __name__ == '__main__':
 
     ### config for fitting and contact calculations ###
@@ -28,16 +28,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_dir = '/home/datassd/yuxuan/data_event_out'
     action = 'subject01_group1_time1'
-    num_frame = len(os.listdir('%s/pose_events/%s' % (data_dir, action)))
+    kinematic_2d_path = "data/kinematic_2ds.npy"
+    num_frame = len(os.listdir('%s/pose_events/%s' % (data_dir, action))) - 1
     theta_list, tran_list, joints2d_list, joints3d_list = [], [], [], []
     for idx in range(num_frame):
         beta, theta, tran, joints3d, joints2d = joblib.load(
                     '%s/pose_events/%s/pose%04i.pkl' % (data_dir, action, idx))
-        theta_list.append(theta)
-        tran_list.append(tran)
+        theta_list.append(theta[0])
+        tran_list.append(tran[0])
         joints2d_list.append(joints2d)
-        joints3d_list.append(joints3d_list)
-    joints2d
+        joints3d_list.append(joints3d)
+    kinematic_2d = np.stack(joints2d_list, axis=0)[:,:,:-1] #(1345, 24, 2)
+    np.save(kinematic_2d_path, kinematic_2d)
+
     ### Contact and Stationary Estimation ### don't need floor
     if args.contact_estimation: #if Ture, run stage two, vnect_2d used. (VNect uses a different joints index, see https://github.com/XinArkh/VNect)
         target_joints = ["head", "neck", "left_hip",  "left_knee", "left_ankle", "left_toe",  "right_hip", "right_knee", "right_ankle", "right_toe",  "left_shoulder", "left_elbow", "left_wrist", "right_shoulder", "right_elbow", "right_wrist"]
@@ -53,19 +56,25 @@ if __name__ == '__main__':
         ConNet.eval()
         print("Stage II running ... ")
         # inferenceCon(target_joints,vnect_dic,ConNet,args.image_size,window_size,args.vnect_2d_path,args.save_path)
-        inferenceCon(target_joints,kinematic_dic,ConNet,args.image_size,window_size,args.vnect_2d_path,args.save_path)
+        inferenceCon(target_joints,kinematic_dic,ConNet,args.image_size,window_size,kinematic_2d_path,args.save_path)
         print("Done. Predictions were saved at "+args.save_path)
 
     ### Physics-based Optimization ###
+    thetas = np.stack(theta_list, axis=0)
+    trans = np.stack(tran_list, axis=0)
+    motion_params = np.concatenate((trans, thetas), axis=1)
+
     path_dict={ 
-            "floor_frame":args.floor_frame, 
-            "humanoid_path":args.humanoid_path,
-            "skeleton_filename":args.skeleton_filename,
-            "motion_filename":args.motion_filename,
-            "floor_path":args.floor_path,
-            "contact_path":args.contact_path,
-            "stationary_path":args.stationary_path,
-            "save_path":args.save_path} 
+            "floor_frame": args.floor_frame, 
+            "humanoid_path": args.humanoid_path,
+            "motion_params": motion_params,
+            "skeleton_filename": args.skeleton_filename,
+            "floor_path": args.floor_path,
+            "contact_path": args.contact_path,
+            "stationary_path": args.stationary_path,
+            "save_path": args.save_path,
+            "action": action
+            } 
     print("Stage III running ... ") 
     sim_loop(path_dict,floor_known=args.floor_known)
     print("Done. Predictions were saved at "+args.save_path)

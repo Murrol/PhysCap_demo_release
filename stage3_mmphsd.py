@@ -27,10 +27,10 @@ def sim_loop(path_dict,floor_known=0):
     model.gravity = np.array([0., -9.81, 0.])
     id_robot = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False) #optimizing
     id_robot_vnect = p.loadURDF(path_dict["humanoid_path"], [0, 0, 0.5], globalScaling=1, useFixedBase=False) #init kinematic
-    skeleton_specific_base_offset =  np.array([-2.35437, -237.806, 26.4052])
+    skeleton_specific_base_offset =  np.array([-2.35437, -237.806, 26.4052]) #see physcap.skeleton
     _, _, jointIds, jointNames = kui.get_jointIds_Names(id_robot)
 
-    LMG = LabelMotionGetter(path_dict["skeleton_filename"],path_dict["motion_filename"], jointNames, skeleton_specific_base_offset)
+    LMG = LabelMotionGetter(path_dict["skeleton_filename"],path_dict["motion_params"], jointNames, skeleton_specific_base_offset)
     
     la_po_dic = LMG.get_dictionary() 
     if floor_known:
@@ -92,7 +92,7 @@ def sim_loop(path_dict,floor_known=0):
     n_frames = len(la_po_dic['trans_root_tx']) 
     for count in range(n_frames):
   
-        q_ref = LMG.dic2numpy_direct(count + 1, la_po_dic, jointNames) #index using jointNames
+        q_ref = LMG.dic2numpy_direct(count + 1, la_po_dic, jointNames) 
         target_com, target_base_ori = LMG.get_base_motion(count + 1, la_po_dic,   trans_scale=0.001)
         target_base_ori_original = copy.copy(target_base_ori)
         target_com += skeleton_specific_base_offset / scale #scale from mm to m

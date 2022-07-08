@@ -249,6 +249,70 @@ class LabelMotionGetter(): ###get motion, motion.motion used###
     def dic2numpy_direct(self,frame,la_po_dic,jointNames):
         return np.array([la_po_dic[name][frame] for name in jointNames])
 
+class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
+    def __init__(self, skeleton_filename, motion_params, jointNames, offset):
+        self.skeleton_filename = skeleton_filename
+        self.motion_params = motion_params
+        self.jointNames = jointNames
+        self.offset = offset  # this is required since the skeleton has some offset from the origin i.e. the root of the skeleton is not located at the origin.
+    
+    def _motion_data_getter(self):
+        scale = 1000
+        length = self.motion_params.shape[0]
+        root_tran = self.motion_params[:, :3] * scale
+        smpl_theta = np.reshape(self.motion_params[:, 3:], (-1, 3))
+        r = Rot.from_rotvec(smpl_theta)
+        euler = r.as_euler('XYZ') #3 characters belonging to the set {‘X’, ‘Y’, ‘Z’} for intrinsic rotations, or {‘x’, ‘y’, ‘z’} for extrinsic rotations
+        euler = np.reshape(euler, (length, -1))
+        self.pose = np.concatenate((root_tran, euler), axis=1)
+        clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
+        self.cleaned_pose = self.pose[:, clean_pose_idx]
+
+    def _75joints_name_getter(self):
+        with open(self.skeleton_filename) as f:
+            content = f.readlines()
+        content = np.array([x.strip().split(" ") for x in content])
+        _75joints_names_mess = np.array(content[2:77][np.arange(0, len(content[99:]), 3)[:-1]])
+        self._75joints_names = [x[0] for x in _75joints_names_mess]
+
+    def dof_name_getter(self):
+        with open(self.skeleton_filename) as f:
+            content = f.readlines()
+        content = np.array([x.strip().split(" ") for x in content])
+        dof_names_mess = np.array(content[99:][np.arange(0, len(content[99:]), 3)[:-1]])
+        dof_names = [x[0] for x in dof_names_mess]
+        return dof_names
+
+    def dic_create_label_pose(self):
+        dic_frames = {}
+        for label, data in zip(self.dof_names, self.cleaned_pose):
+            dic_frames[label] = data
+        for name in self.jointNames:
+            if name.decode("utf-8") not in dic_frames.keys():
+                dic_frames[name.decode("utf-8")] = np.zeros(len(self.cleaned_pose[0]))
+        return dic_frames
+
+    def get_dictionary(self):
+        self.dof_names = self.dof_name_getter()
+        self.dof_names = [name.replace("rot_","") for name in self.dof_names]
+        self._75joints_name_getter()
+        self._motion_data_getter()
+
+        return self.dic_create_label_pose()
+
+    def get_base_motion(self,  frame, la_po_dic, trans_scale):
+        ref_base_config = self.dic2numpy(frame, la_po_dic, [b'trans_root_tx', b'trans_root_ty', b'trans_root_tz', b'root_rx', b'root_ry', b'root_rz'])
+        target_com =  ref_base_config[:3]  * trans_scale  
+        target_base_ori = copy.copy(ref_base_config[3:]) 
+        return np.array(target_com), np.array(target_base_ori)
+
+    def dic2numpy(self,frame,la_po_dic,jointNames):
+        return np.array([la_po_dic[name.decode('utf-8')][frame] for name in jointNames])
+
+    def dic2numpy_direct(self,frame,la_po_dic,jointNames):
+        return np.array([la_po_dic[name][frame] for name in jointNames])
+
+
 class angle_util():
     def angle_clean(self,q):
         mod = q % (2 * math.pi)
