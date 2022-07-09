@@ -264,7 +264,8 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
         smpl_theta = np.reshape(self.motion_params[:, 3:], (-1, 3))
         r = Rot.from_rotvec(smpl_theta)
         euler = r.as_euler('XYZ') #3 characters belonging to the set {‘X’, ‘Y’, ‘Z’} for intrinsic rotations, or {‘x’, ‘y’, ‘z’} for extrinsic rotations
-        # euler = r.as_euler('xyz')
+        # euler = r.as_euler('xyz') ###ok ??
+        # euler = r.as_euler('zyx') ##not work??
         euler = np.reshape(euler, (length, -1))
         self.pose = np.concatenate((root_tran, euler), axis=1)
         clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
@@ -401,7 +402,7 @@ class RefCorrect():
         R_correct = CU.fcn_RotationFromTwoVectors(vec_from, vec_to)
 
         """  this R conversion is necessary due to the difference of euler convention """
-        eulerR = CU.rotationMatrixToEulerAngles(R_correct)
+        eulerR = CU.rotationMatrixToEulerAngles(R_correct) ####??? R_correct vs R_calib
         r_calib = Rot.from_euler('xyz', eulerR)
         R_calib = r_calib.as_matrix()
 

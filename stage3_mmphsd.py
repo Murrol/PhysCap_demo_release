@@ -39,8 +39,8 @@ def sim_loop(path_dict,floor_known=0):
     if floor_known:
         floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
     
-    ini = Initializer(floor_known,path_dict["floor_frame"])
-    ini.remove_collisions(id_robot,id_robot_vnect) 
+    ini = Initializer(floor_known, path_dict["floor_frame"])
+    ini.remove_collisions(id_robot, id_robot_vnect) 
     
     rbdl_ids = {"l_ankle": 8, "l_toe": 11, "l_heel": 12, "r_ankle": 17, "r_toe": 21, "r_heel": 22} #flip from smpl index?
     
@@ -71,7 +71,8 @@ def sim_loop(path_dict,floor_known=0):
     ### RBDL setup ###
     RO = RbdlOpt(delta_t, l_kafth_ids, r_kafth_ids) 
     jointNames = [x.decode('utf-8') for x in jointNames]
-    q_all = [] 
+    q_all = []
+    q_ref_all = []
     
     floor_height=0.0 
     r_toe_id = con_j_idx_bullet["r_toe_id"] 
@@ -109,6 +110,9 @@ def sim_loop(path_dict,floor_known=0):
         CoM_projected = CU.get_projected_CoM(model, q, qdot, qddot)
         judgement = CU.support_polygon_checker(CoM_projected, corners)
         kui.motion_update_specification(id_robot_vnect, jointIds, q_ref)
+        # print(q_ref)
+        _q_ref = copy.copy(q_ref)
+        
  
         target_base_ori, q_ref = rc.ref_motion_correction(id_robot_vnect, count, target_base_ori, target_base_ori_original, judgement, q, q_ref)
         # print(target_base_ori, target_base_ori_original)
@@ -126,7 +130,8 @@ def sim_loop(path_dict,floor_known=0):
          
         if count == 0: 
             p.stepSimulation()
-            p.resetBasePositionAndOrientation(id_robot, [target_com[0], target_com[1], target_com[2]], p.getQuaternionFromEuler([target_vnect_ori[0], target_vnect_ori[1] , target_vnect_ori[2]]))
+            # p.resetBasePositionAndOrientation(id_robot, [target_com[0], target_com[1], target_com[2]], p.getQuaternionFromEuler([target_vnect_ori[0], target_vnect_ori[1] , target_vnect_ori[2]]))
+            p.resetBasePositionAndOrientation(id_robot, [target_com[0], target_com[1], target_com[2]], p.getQuaternionFromEuler([target_vnect_ori[2], target_vnect_ori[1] , target_vnect_ori[0]]))
             p.stepSimulation()
  
         for k in range(iter):
@@ -174,19 +179,25 @@ def sim_loop(path_dict,floor_known=0):
             #tau, acc, _ = RO.qp_control_fast(bullet_contacts_lth_rth, M, qdot, des_qddot, gcc, lth_rth_J6D,  GRF_opt, G)
             
             """  Pose update """ 
-            qdot = pre_qdot +acc*delta_t 
+            qdot = pre_qdot + acc * delta_t 
             q =  pre_q + delta_t * qdot  
             """  update visualization """
             r = Rot.from_euler('zyx', q[3:6])
             angle = r.as_euler('xyz')
             if count == 0: q = copy.copy(q_ref)
  
+            #q_all.append(q)
             q_all.append(q)
+            # print(_q_ref)
+            # print(q_ref[6:])
+            # return
+            q_ref_all.append(np.array([target_com[0], target_com[1], target_com[2], target_vnect_ori[2], target_vnect_ori[1]  , target_vnect_ori[0]] + _q_ref.tolist()))
+            
         
         kui.motion_update_specification(id_robot, jointIds_reordered, q[6:])
         p.resetBasePositionAndOrientation(id_robot, [q[0], q[1], q[2]], p.getQuaternionFromEuler([angle[2], angle[1], angle[0]]))
         p.stepSimulation()
-        p.resetBasePositionAndOrientation(id_robot_vnect, [target_com[0], target_com[1], target_com[2]], p.getQuaternionFromEuler( [target_vnect_ori[2], target_vnect_ori[1], target_vnect_ori[0]]))
+        p.resetBasePositionAndOrientation(id_robot_vnect, [target_com[0], target_com[1], target_com[2]], p.getQuaternionFromEuler([target_vnect_ori[2], target_vnect_ori[1], target_vnect_ori[0]]))
 
         count += 1 
         if count>=(n_frames-1): 
@@ -194,6 +205,6 @@ def sim_loop(path_dict,floor_known=0):
                 os.makedirs(path_dict["save_path"])
             action = '_' + path_dict.get("action", "")
             np.save(path_dict["save_path"]+'PhyCap_q%s.npy' % action, q_all)
-            np.save(path_dict["save_path"]+'Ref_q%s.npy' % action, q_ref) 
+            np.save(path_dict["save_path"]+'Ref_q%s.npy' % action, q_ref_all) 
             print("Prediction Saved.") 
             sys.exit() 
