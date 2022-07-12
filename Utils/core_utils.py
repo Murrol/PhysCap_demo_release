@@ -26,7 +26,7 @@ class KinematicUtil():
             jointType = info[2]
             jointIdsAll.append(j)
             jointNamesAll.append(jointName)
-            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE): #joints with dofs
+            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE): #joints with dofs ##only revolute no prismatic
                 jointIds.append(j)
                 jointNames.append(jointName)
         return jointIdsAll, jointNamesAll, jointIds, jointNames
@@ -319,7 +319,7 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
 
 
 class angle_util():
-    def angle_clean(self,q):
+    def angle_clean(self,q): #range: [-pi, pi)
         mod = q % (2 * math.pi)
         if mod >= math.pi:
             return mod - 2 * math.pi
@@ -393,16 +393,16 @@ class RefCorrect():
         self.pre_correct_flag=0
         self.stationary_flags=stationary_flags
 
-    def ref_motion_correction(self,id_robot_vnect,count,target_base_ori,target_base_ori_original,judgement,q,q_ref):
+    def ref_motion_correction(self, id_robot_vnect, count, target_base_ori, target_base_ori_original, judgement, q, q_ref):
 
-        end = p.getLinkState(id_robot_vnect, 47)[0]# 47 top torso
-        basePos, _ = p.getBasePositionAndOrientation(id_robot_vnect)
-        vec_from = np.array(end) - np.array(basePos)
+        end = p.getLinkState(id_robot_vnect, 47)[0] # 47 top torso
+        basePos, _ = p.getBasePositionAndOrientation(id_robot_vnect) 
+        vec_from = np.array(end) - np.array(basePos) #vector root->top torso, should be (0, 1, 0)
         vec_to = np.array([0, 1, 0])
         R_correct = CU.fcn_RotationFromTwoVectors(vec_from, vec_to)
 
         """  this R conversion is necessary due to the difference of euler convention """
-        eulerR = CU.rotationMatrixToEulerAngles(R_correct) ####??? R_correct vs R_calib
+        eulerR = CU.rotationMatrixToEulerAngles(R_correct) ####??? R_correct vs R_calib ###'zyx' right hand coord to left hand?
         r_calib = Rot.from_euler('xyz', eulerR)
         R_calib = r_calib.as_matrix()
 
@@ -456,4 +456,4 @@ class RefCorrect():
         else:
             self.knee_correct_count = 0 
     
-        return target_base_ori,q_ref
+        return target_base_ori, q_ref

@@ -15,7 +15,13 @@ id_simulator = p.connect(p.GUI)
 # p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=0)
 p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=1)
 p.configureDebugVisualizer(flag=p.COV_ENABLE_SHADOWS, enable=0)
-# p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0) 
+p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0) 
+
+debugcamera_param = {'cameraDistance': 1,
+        'cameraYaw': 170,
+        'cameraPitch': -10,
+        'cameraTargetPosition': [0, 0, 4]}
+p.resetDebugVisualizerCamera(**debugcamera_param)
 
 def isKeyTriggered(keys, key):
   o = ord(key)
@@ -64,13 +70,19 @@ if __name__ == '__main__':
     _, _, jointIds, _ = kui.get_jointIds_Names(id_robot)
     jointIds_reordered = np.array(jointIds)[rbdl2bullet]
 
-    animating = False
-    while(p.isConnected()):
-        keys = p.getKeyboardEvents()
-        if isKeyTriggered(keys, ' '): # Press spacebar to start animating
-            animating = not animating
+    p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, "../demo2.mp4")
+    for q, ref_q in zip(qs, ref_qs): 
+        visualizer(id_robot, id_robot_ref, q, ref_q, jointIds_reordered, jointIds)  
+        time.sleep(0.002)
+    p.disconnect()
+
+    # animating = False
+    # while(p.isConnected()):
+    #     keys = p.getKeyboardEvents()
+    #     if isKeyTriggered(keys, ' '): # Press spacebar to start animating
+    #         animating = not animating
         
-        if animating:
-            for q, ref_q in zip(qs, ref_qs): 
-                visualizer(id_robot, id_robot_ref, q, ref_q, jointIds_reordered, jointIds)  
-                time.sleep(0.002)
+    #     if animating:
+    #         for q, ref_q in zip(qs, ref_qs): 
+    #             visualizer(id_robot, id_robot_ref, q, ref_q, jointIds_reordered, jointIds)  
+    #             time.sleep(0.002)

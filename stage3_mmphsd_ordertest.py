@@ -23,8 +23,8 @@ def sim_loop(path_dict,floor_known=0):
     AU = angle_util()
     CU = Core_utils()
     kui = KinematicUtil() 
-    id_simulator = p.connect(p.DIRECT) 
-    # id_simulator = p.connect(p.GUI) 
+    # id_simulator = p.connect(p.DIRECT) 
+    id_simulator = p.connect(p.GUI) 
     p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=1) 
      
     model = rbdl.loadModel(path_dict["humanoid_path"].encode()) 
@@ -131,12 +131,14 @@ def sim_loop(path_dict,floor_known=0):
         # return
         mat =  np.dot(mat, R) 
         r2 = Rot.from_matrix(mat)
-        target_vnect_ori = r2.as_euler('xyz')
+        # target_vnect_ori = r2.as_euler('xyz')
+
+        target_vnect_ori = r2.as_euler('zyx')
         target_phy_ori = r2.as_euler('zyx')
  
-        q_ref = np.array([target_com[0], target_com[1], target_com[2],  target_phy_ori[0], target_phy_ori[1]  , target_phy_ori[2]] + q_ref.tolist()) #og
+        # q_ref = np.array([target_com[0], target_com[1], target_com[2],  target_phy_ori[0], target_phy_ori[1]  , target_phy_ori[2]] + q_ref.tolist()) #og
         
-        # q_ref = np.array([target_com[0], target_com[1], target_com[2],  target_phy_ori[2], target_phy_ori[1]  , target_phy_ori[0]] + q_ref.tolist()) #'XYZ'
+        q_ref = np.array([target_com[0], target_com[1], target_com[2],  target_phy_ori[2], target_phy_ori[1]  , target_phy_ori[0]] + q_ref.tolist()) #'XYZ'
         
         ##### p.getQuaternionFromEuler takes euler order 'xyz' ###verified #####
 
@@ -176,7 +178,7 @@ def sim_loop(path_dict,floor_known=0):
             rbdl.CompositeRigidBodyAlgorithm(model, q, M, update_kinematics=False)
 
             """  get Jacobis """
-            lth_rth_J6D = CU.get_J_lth_rth(model,q,rbdl_ids)
+            lth_rth_J6D = CU.get_J_lth_rth(model, q, rbdl_ids)
 
             """  get foot positions """
             l_toe = np.array(p.getLinkState(id_robot, l_toe_id)[0])
@@ -196,7 +198,8 @@ def sim_loop(path_dict,floor_known=0):
 
             """  update visualization """
             r = Rot.from_euler('zyx', q[3:6])
-            angle = r.as_euler('xyz')
+            # angle = r.as_euler('xyz')
+            angle = r.as_euler('zyx')
             if count == 0: q = copy.copy(q_ref)
             q_all.append(q)
             # print(_q_ref)

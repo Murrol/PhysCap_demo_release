@@ -1,7 +1,8 @@
 import joblib
 import numpy as np
 import os
-from stage3_mmphsd import sim_loop
+# from stage3_mmphsd import sim_loop
+from stage3_mmphsd_ordertest import sim_loop
 from models.networks import ContactEstimationNetwork
 import argparse
 from stage2 import inferenceCon
@@ -12,7 +13,7 @@ if __name__ == '__main__':
 
     ### config for fitting and contact calculations ###
     parser = argparse.ArgumentParser(description='arguments for predictions')
-    parser.add_argument('--contact_estimation', type=int, default=0)
+    parser.add_argument('--contact_estimation', type=int, default=1)
     parser.add_argument('--image_size',type=int, default=256)
     parser.add_argument('--floor_known', type=int, default=0)
     parser.add_argument('--model_path', default="models/ConStaNet_sample.pkl") 
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_path', default='./results/')
     args = parser.parse_args()
     data_dir = '/home/datassd/yuxuan/data_event_out'
-    action = 'subject01_group1_time2' #'subject01_group1_time1' broken, need to be replaced
+    action = 'subject01_group1_time1' 
     kinematic_2d_path = "data/kinematic_2ds.npy"
     num_frame = len(os.listdir('%s/pose_events/%s' % (data_dir, action))) - 1
     theta_list, tran_list, joints2d_list, joints3d_list = [], [], [], []
