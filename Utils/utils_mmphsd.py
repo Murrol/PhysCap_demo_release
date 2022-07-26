@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-import calibration.utils as util
+import calibration as util
 import pickle
 import numpy as np
 import cv2
