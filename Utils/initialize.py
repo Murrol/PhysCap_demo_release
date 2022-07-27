@@ -5,14 +5,14 @@ class Initializer():
         if floor_known:
             self.RT = np.load(floor_frame_path)
         else:
-            # self.RT =np.eye(4)
-            self.RT =np.diag((-1,-1,1,1))
+            self.RT =np.eye(4)
+            # self.RT =np.diag((-1,-1,1,1))
             
         self.rbdl2bullet = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, \
                             23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, \
                             20, 21, 22]
 
-        r_knee_id = 26
+        r_knee_id = 26 #pybullet idx
         r_ankle_id = 28
         r_foot_id = 30
         r_toe_id = 34

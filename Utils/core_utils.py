@@ -263,15 +263,16 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
         # print(root_tran)
         smpl_theta = np.reshape(self.motion_params[:, 3:], (-1, 3))
         r = Rot.from_rotvec(smpl_theta)
-        euler = r.as_euler('XYZ') #3 characters belonging to the set {‘X’, ‘Y’, ‘Z’} for intrinsic rotations, or {‘x’, ‘y’, ‘z’} for extrinsic rotations
+        euler = r.as_euler('xyz')
+        # euler = r.as_euler('XYZ') #3 characters belonging to the set {‘X’, ‘Y’, ‘Z’} for intrinsic rotations, or {‘x’, ‘y’, ‘z’} for extrinsic rotations
         # euler = r.as_euler('xyz') ###ok ??
         # euler = r.as_euler('zyx') ##not work??
         euler = np.reshape(euler, (length, -1))
         self.pose = np.concatenate((root_tran, euler), axis=1)
-        clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
-        self.cleaned_pose = self.pose[:, clean_pose_idx].T
+        self.clean_pose_idx = [self._75joints_names.index(x) for x in self.dof_names]
+        self.cleaned_pose = self.pose[:, self.clean_pose_idx].T
         # self.cleaned_pose[:6, :] = 0. ###for easy visualization in gui without real camera and world space
-        # print(self.cleaned_pose.shape)
+        # print(self.cleaned_pose.shape) # (33, 1345)
 
     def _75joints_name_getter(self):
         with open(self.skeleton_filename) as f:
@@ -294,7 +295,7 @@ class LabelMotionGetter_mmhpsd(): ###get motion using mmphsd data###
             dic_frames[label] = data
         for name in self.jointNames:
             if name.decode("utf-8") not in dic_frames.keys():
-                dic_frames[name.decode("utf-8")] = np.zeros(len(self.cleaned_pose[0]))
+                dic_frames[name.decode("utf-8")] = np.zeros(len(self.cleaned_pose[0])) #add joints
         return dic_frames
 
     def get_dictionary(self):
@@ -406,20 +407,36 @@ class RefCorrect():
         r_calib = Rot.from_euler('xyz', eulerR)
         R_calib = r_calib.as_matrix()
 
-        r3 = Rot.from_euler('zyx', target_base_ori)
+        # r3 = Rot.from_euler('zyx', target_base_ori)
+        # mat = r3.as_matrix()
+        # mat = np.dot(mat, R_calib)
+        # r4 = Rot.from_matrix(mat)
+        # target_vec = r4.as_euler('zyx')
+
+        # key_times = [0, 1]
+        # current_r = Rot.from_euler('zyx', np.array(list(map(AU.angle_clean, target_base_ori_original))))
+        # xyz_base = current_r.as_euler('zyx')
+        # r1 = Rot.from_euler('zyx', [xyz_base, target_vec]) # -target_base_ori[1]+
+        # slerp = Slerp(key_times, r1)
+        # times = np.arange(0, 1.0, 0.05)
+        # interp_rots = slerp(times)
+        # eulers = interp_rots.as_euler('zyx') 
+        r3 = Rot.from_euler('xyz', target_base_ori)
         mat = r3.as_matrix()
-        mat = np.dot(mat, R_calib)
+        # mat = np.dot(mat, R_calib)
+        mat = np.dot(R_calib, mat)
         r4 = Rot.from_matrix(mat)
-        target_vec = r4.as_euler('zyx')
+        target_vec = r4.as_euler('xyz')
 
         key_times = [0, 1]
-        current_r = Rot.from_euler('zyx', np.array(list(map(AU.angle_clean, target_base_ori_original))))
-        xyz_base = current_r.as_euler('zyx')
-        r1 = Rot.from_euler('zyx', [xyz_base, target_vec]) # -target_base_ori[1]+
+        current_r = Rot.from_euler('xyz', np.array(list(map(AU.angle_clean, target_base_ori_original))))
+        xyz_base = current_r.as_euler('xyz')
+        r1 = Rot.from_euler('xyz', [xyz_base, target_vec]) # -target_base_ori[1]+
         slerp = Slerp(key_times, r1)
         times = np.arange(0, 1.0, 0.05)
         interp_rots = slerp(times)
-        eulers = interp_rots.as_euler('zyx') 
+        eulers = interp_rots.as_euler('xyz') 
+
 
         if self.stationary_flags[count] and not judgement:
             self.inter_flag = 1

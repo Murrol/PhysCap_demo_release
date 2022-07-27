@@ -9,7 +9,7 @@ import time
 import argparse
 
 parser = argparse.ArgumentParser(description='arguments for predictions')
-parser.add_argument('--q_path',  default="./results/PhyCap_q.npy") 
+parser.add_argument('--q_path',  default="./results/PhyCap_q_subject01_group1_time1.npy") 
 args = parser.parse_args()
 id_simulator = p.connect(p.GUI)
 # p.configureDebugVisualizer(flag=p.COV_ENABLE_Y_AXIS_UP, enable=0)
@@ -33,9 +33,10 @@ def visualizer(id_robot, id_robot_ref, q, q_ref, jointIds_reordered, jointIds):
     kui.motion_update_specification(id_robot, jointIds_reordered, q[6:]) 
     # print(q_ref-q)
     kui.motion_update_specification(id_robot_ref, jointIds, q_ref[6:]) 
-    r = Rot.from_euler('zyx', q[3:6])  # Rot.from_matrix()
+    r = Rot.from_euler('xyz', q[3:6])  # Rot.from_matrix()
     angle = r.as_euler('xyz') 
-    p.resetBasePositionAndOrientation(id_robot, [q[0], q[1], q[2]], p.getQuaternionFromEuler([angle[2], angle[1], angle[0]]))
+    # p.resetBasePositionAndOrientation(id_robot, [q[0], q[1], q[2]], p.getQuaternionFromEuler([angle[0], angle[1], angle[2]]))
+    p.resetBasePositionAndOrientation(id_robot, q[: 3], p.getQuaternionFromEuler(q[3: 6]))
     # p.stepSimulation()
 
     ### angle_ref = r_ref.as_euler('xyz') ; [angle_ref[2], angle_ref[1], angle_ref[0]] == angle_ref = r_ref.as_euler('ZYX')
@@ -48,6 +49,7 @@ def data_loader(q_path):
     
  
 if __name__ == '__main__': 
+    fps = 25
     ini = Initializer()
     rbdl2bullet=ini.get_rbdl2bullet() 
     kui = KinematicUtil() 
@@ -70,10 +72,10 @@ if __name__ == '__main__':
     _, _, jointIds, _ = kui.get_jointIds_Names(id_robot)
     jointIds_reordered = np.array(jointIds)[rbdl2bullet]
 
-    p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, "../demo2.mp4")
+    p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, "../demo0726.mp4")
     for q, ref_q in zip(qs, ref_qs): 
         visualizer(id_robot, id_robot_ref, q, ref_q, jointIds_reordered, jointIds)  
-        time.sleep(0.002)
+        time.sleep(0.1)
     p.disconnect()
 
     # animating = False
