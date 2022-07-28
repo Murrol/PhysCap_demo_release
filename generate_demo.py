@@ -40,6 +40,15 @@ def visualize_sythesis_events():
         tran_list.append(tran)
         joints2d_list.append(joints2d)
         joints3d_list.append(joints3d)
+    
+    # tmp = np.array(joints3d_list)
+    # feet = tmp[:,10:12]
+    # feet = np.round(feet, 2)
+    # feet = np.reshape(feet, (-1, 2*3))
+    # import scipy
+    # print(scipy.stats.mode(feet, axis=0)[0].shape)
+    # print(scipy.stats.mode(feet, axis=0)[0])
+    # return
 
     qs = np.load('results/PhyCap_q_%s.npy' %action)
 
@@ -130,8 +139,9 @@ def visualize_sythesis_events():
 
     frames = []
 
-    for frame_idx in tqdm(range(num_frame)):
-    # for frame_idx in tqdm(range(start_frame_idx, end_frame_idx)):
+    tmp = []
+    # for frame_idx in tqdm(range(num_frame)):
+    for frame_idx in tqdm(range(start_frame_idx, end_frame_idx)):
         img_filename = '{}/data_event_out/full_pic_256/{}/fullpic{:04d}.jpg'.format(data_dir, action, frame_idx)
         img = cv2.resize(cv2.imread(img_filename)[:, :, ::-1], (img_size, img_size))
 
@@ -146,6 +156,11 @@ def visualize_sythesis_events():
                                 transl=torch.from_numpy(trans).float().to(device),
                                 return_verts=True)
         verts = outputp.vertices.detach().cpu().numpy()[0]
+
+        # tmp.append(np.sort(verts[:, 1])[-10:])
+        # print(theta[:, :3])
+        
+        
 
         render_img = (render_model(
             verts, smplmodel.faces, img_size, img_size, np.asarray(cam_intr[0:4]),
@@ -167,6 +182,9 @@ def visualize_sythesis_events():
 
         frame = np.concatenate([img, render_img, result_render_img], axis=1)
         frames.append(frame)
+    
+    # tmp = np.concatenate(tmp, axis=0)
+    # print(tmp)
 
     demo_name = '{}/physcap_{}_{}_{}.gif'.format(save_dir, action, start_frame_idx, end_frame_idx)
     imageio.mimsave(demo_name, frames, 'GIF', duration=1. / 15.)

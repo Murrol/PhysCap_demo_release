@@ -135,10 +135,10 @@ class Core_utils():
         bullet_contacts_lth_rth_raw = [self.isin_flag(l_toe_id, contact_ids), self.isin_flag(l_heel_id, contact_ids), self.isin_flag(r_toe_id, contact_ids), self.isin_flag(r_heel_id, contact_ids)]
          
         bullet_contacts_lth_rth = np.zeros(4)
-        bullet_contacts_lth_rth[0] = cflags[0]
-        bullet_contacts_lth_rth[1] = cflags[1]
-        bullet_contacts_lth_rth[2] = cflags[2]
-        bullet_contacts_lth_rth[3] = cflags[3]
+        bullet_contacts_lth_rth[0] = np.array(cflags[0])
+        bullet_contacts_lth_rth[1] = np.array(cflags[1])
+        bullet_contacts_lth_rth[2] = np.array(cflags[2])
+        bullet_contacts_lth_rth[3] = np.array(cflags[3])
 
         h_thresh = 0.01 + floor_height
          

@@ -44,7 +44,8 @@ def sim_loop(path_dict,floor_known=0):
     la_po_dic = LMG.get_dictionary()
     print(len(la_po_dic)) #43
     if floor_known:
-        floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
+        # floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
+        floor = p.loadURDF(path_dict["floor_path"],  [0, 0.928, 0.0],  [-0.7071068, 0, 0, 0.7071068])
     
     ini = Initializer(floor_known, path_dict["floor_frame"])
     ini.remove_collisions(id_robot, id_robot_vnect) 
@@ -159,9 +160,10 @@ def sim_loop(path_dict,floor_known=0):
         for k in range(iter):
             if floor_known:
                 """ check mesh collisions """
-                bullet_contacts_lth_rth = CU.contact_check(id_robot, contact_flags[count],l_toe_id,l_heel_id,r_toe_id,r_heel_id,floor_height, l_toe,l_heel,r_toe,r_heel) 
+                bullet_contacts_lth_rth = CU.contact_check(id_robot, contact_flags[count][0],l_toe_id,l_heel_id,r_toe_id,r_heel_id,floor_height, l_toe,l_heel,r_toe,r_heel) 
             else:
-                bullet_contacts_lth_rth = np.zeros(4)
+                # bullet_contacts_lth_rth = np.zeros(4)
+                bullet_contacts_lth_rth = contact_flags[count][0]
 
             """ normalize angles """
             q[6:] = np.array(list(map(AU.angle_clean, q[6:])))

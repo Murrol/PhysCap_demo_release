@@ -3,7 +3,9 @@ import pybullet as p
 class Initializer():
     def __init__(self,floor_known=None,floor_frame_path=None,): 
         if floor_known:
-            self.RT = np.load(floor_frame_path)
+            self.RT = np.eye(4)
+            # self.RT = np.load(floor_frame_path)
+            # self.RT = np.eye(4)
         else:
             self.RT =np.eye(4)
             # self.RT =np.diag((-1,-1,1,1))
