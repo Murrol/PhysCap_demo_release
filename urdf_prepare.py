@@ -124,8 +124,11 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
     joblib.dump(save_dict, './body_parts.pkl')
     joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'joints_position': joints}, './joints_info.pkl')
     parts_mesh = joblib.load('./body_parts.pkl').values()
+    for idx, m in enumerate(parts_mesh):
+        m.export('../demo/body_parts_%d.stl' %idx)
     scene = trimesh.Scene(parts_mesh)
     scene.show()
+    scene.export('../demo/body_parts.stl')
     # vertex_colors = part_segm_to_vertex_colors(part_segm, vertices.shape[0])
     # mesh = trimesh.Trimesh(vertices, faces, process=False, vertex_colors=vertex_colors)
     # mesh.show(background=(0,0,0,0))
