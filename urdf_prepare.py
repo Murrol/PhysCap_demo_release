@@ -7,6 +7,7 @@ import subprocess
 import numpy as np
 # from smplx import SMPL, SMPLH, SMPLX
 import smplx
+from smplx.joint_names import JOINT_NAMES
 from matplotlib import cm as mpl_cm, colors as mpl_colors
 from scipy.spatial import cKDTree
 
@@ -108,9 +109,15 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
 
     vertices = body_model().vertices[0].detach().numpy()
-    joints = body_model().joints[0].detach().numpy()
+    joints = body_model().joints[0].detach().numpy()[:24]
 
-    print(joints)
+    print(joints.shape)
+    print(len(JOINT_NAMES))
+    # joints = [joints[JOINT_NAMES.index(n)] for n in SMPL_JOINT_NAMES]
+    '''
+    They should be: 'nose', 'right_eye', 'left_eye', 'right_ear', 'left_ear', 'left_big_toe', 'left_small_toe', 'left_heel', 'right_big_toe', 'right_small_toe', 'right_heel' and the left, right hand finger tips. For SMPL the latter should not be very useful. You can actually see the order in the vertex_joint_selector script.
+    '''
+    print(joints.shape)
     faces = body_model.faces
 
     parts_mesh = list()
@@ -123,12 +130,12 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
     
     joblib.dump(save_dict, './body_parts.pkl')
     joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'joints_position': joints}, './joints_info.pkl')
-    parts_mesh = joblib.load('./body_parts.pkl').values()
-    for idx, m in enumerate(parts_mesh):
-        m.export('../demo/body_parts_%d.stl' %idx)
-    scene = trimesh.Scene(parts_mesh)
-    scene.show()
-    scene.export('../demo/body_parts.stl')
+    # parts_mesh = joblib.load('./body_parts.pkl').values()
+    # for idx, m in enumerate(parts_mesh):
+    #     m.export('../demo/body_parts_%d.stl' %idx)
+    # scene = trimesh.Scene(parts_mesh)
+    # scene.show()
+    # scene.export('../demo/body_parts.stl')
     # vertex_colors = part_segm_to_vertex_colors(part_segm, vertices.shape[0])
     # mesh = trimesh.Trimesh(vertices, faces, process=False, vertex_colors=vertex_colors)
     # mesh.show(background=(0,0,0,0))
@@ -136,4 +143,4 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
 if __name__ == '__main__':
     # main(sys.argv[1], sys.argv[2])
-    main()
+    main(body_model_path='/Users/yuxuanmu/project/smpl_model/models')
