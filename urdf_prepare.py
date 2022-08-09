@@ -110,9 +110,10 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
     vertices = body_model().vertices[0].detach().numpy()
     joints = body_model().joints[0].detach().numpy()[:24]
+    # print(joints[0])
 
-    print(joints.shape)
-    print(len(JOINT_NAMES))
+    # print(joints.shape)
+    # print(len(JOINT_NAMES))
     # joints = [joints[JOINT_NAMES.index(n)] for n in SMPL_JOINT_NAMES]
     '''
     They should be: 'nose', 'right_eye', 'left_eye', 'right_ear', 'left_ear', 'left_big_toe', 'left_small_toe', 'left_heel', 'right_big_toe', 'right_small_toe', 'right_heel' and the left, right hand finger tips. For SMPL the latter should not be very useful. You can actually see the order in the vertex_joint_selector script.
