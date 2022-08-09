@@ -10,6 +10,11 @@ import smplx
 from smplx.joint_names import JOINT_NAMES
 from matplotlib import cm as mpl_cm, colors as mpl_colors
 from scipy.spatial import cKDTree
+import torch
+from pytorch3d.transforms import euler_angles_to_matrix, matrix_to_quaternion, axis_angle_to_quaternion,\
+    quaternion_to_axis_angle, quaternion_multiply, quaternion_raw_multiply, quaternion_to_matrix, \
+    matrix_to_euler_angles, quaternion_invert, quaternion_apply
+
 
 SMPL_JOINT_NAMES = [
     'pelvis',
@@ -63,6 +68,51 @@ SKELETON = [
     [20, 22],
     [21, 23]
 ]
+
+PARENTS = [-1] + [x[0] for x in SKELETON]
+
+def quat_fk(lrot, lpos, parents): ###TODO
+    """
+    Performs Forward Kinematics (FK) on local quaternions and local positions to retrieve global representations
+
+    :param lrot: tensor of local quaternions with shape (..., Nb of joints, 4)
+    :param lpos: tensor of local positions with shape (..., Nb of joints, 3)
+    :param parents: list of parents indices
+    :return: tuple of tensors of global quaternion, global positions
+    """
+    gp, gr = [lpos[..., :1, :]], [lrot[..., :1, :]]
+    for i in range(1, len(parents)):
+        gp.append(quaternion_apply(gr[parents[i]], lpos[..., i:i + 1, :]) + gp[parents[i]])
+        gr.append(quaternion_raw_multiply(gr[parents[i]], lrot[..., i:i + 1, :]))
+
+    res = torch.cat(gr, dim=-2), torch.cat(gp, dim=-2)
+    return res
+
+
+def quat_ik(grot, gpos, parents): ###TODO
+    """
+    Performs Inverse Kinematics (IK) on global quaternions and global positions to retrieve local representations
+
+    :param grot: tensor of global quaternions with shape (..., Nb of joints, 4)
+    :param gpos: tensor of global positions with shape (..., Nb of joints, 3)
+    :param parents: list of parents indices
+    :return: tuple of tensors of local quaternion, local positions
+    """
+    res = [
+        torch.cat([
+            grot[..., :1, :],
+            quaternion_raw_multiply(quaternion_invert(grot[..., parents[1:], :]), grot[..., 1:, :]),
+        ], dim=-2),
+        torch.cat([
+            gpos[..., :1, :],
+            quaternion_apply(
+                quaternion_invert(grot[..., parents[1:], :]),
+                gpos[..., 1:, :] - gpos[..., parents[1:], :]),
+        ], dim=-2)
+    ]
+
+    return res
+
 def download_url(url, outdir):
     print(f'Downloading files from {url}')
     cmd = ['wget', '-c', url, '-P', outdir]
@@ -110,6 +160,16 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
     vertices = body_model().vertices[0].detach().numpy()
     joints = body_model().joints[0].detach().numpy()[:24]
+    loc_joints_quat = axis_angle_to_quaternion(torch.zeros(1, 24, 3))
+    # print(loc_joints_quat)
+    glob_joints_quat = loc_joints_quat
+    glob_joints_pos = body_model().joints[:, :24]
+    res = quat_ik(glob_joints_quat, glob_joints_pos, PARENTS)
+    loc_joints_pos = res[1]
+
+    recover = quat_fk(loc_joints_quat, loc_joints_pos, PARENTS)[1]
+    print(recover-glob_joints_pos) #verified
+
     # print(joints[0])
 
     # print(joints.shape)
@@ -130,7 +190,12 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
         save_dict[k] = _mesh
     
     joblib.dump(save_dict, './body_parts.pkl')
-    joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'joints_position': joints}, './joints_info.pkl')
+    loc_joints_pos = loc_joints_pos.squeeze().detach().numpy()
+    loc_joints_axisangle = np.zeros([24,3])
+
+    joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'joints_position': joints,\
+         'loc_joints_pos': loc_joints_pos, 'loc_joints_axisangle': loc_joints_axisangle, 'parents':PARENTS}, \
+        './joints_info.pkl')
     # parts_mesh = joblib.load('./body_parts.pkl').values()
     # for idx, m in enumerate(parts_mesh):
     #     m.export('../demo/body_parts_%d.stl' %idx)

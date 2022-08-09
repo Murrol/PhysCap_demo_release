@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # hands_pose = np.zeros([1,6]) #set hand pose to zeros 
     raw_amass_path = '/Users/yuxuanmu/project/amass_data'
     body_model_path='/Users/yuxuanmu/project/smpl_model/models'
-    fps = 10.
+    fps = 20.
     count = 0
     
     zup2yup = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
@@ -54,11 +54,14 @@ if __name__ == '__main__':
         new_trans = H[:, 0:3, 3] - t_root
         
         trans = new_trans
-        # print(np.var(trans[:,1]))
+        # print(np.mean(trans, axis=0))
         poses[:, :3] = new_global_orient
         # print(joints[:, 0])
         # break
         os.makedirs(p[0], exist_ok=True)
+        # body_model = smplx.create(model_path=body_model_path, model_type='smpl', betas=betas[None], global_orient=poses[:1, :3], body_pose=poses[:1, 3:])
+        # joints = body_model().joints.detach().numpy()[0, np.array([10,11,15])] + trans[0]
+        # print(joints)
         np.savez(os.path.join(p[0], p[1]), trans=trans, poses=poses, gender=f_d['gender'], betas=betas, fps=fps)
         count += 1
     print(count)
