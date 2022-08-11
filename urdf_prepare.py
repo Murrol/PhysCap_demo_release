@@ -71,6 +71,31 @@ SKELETON = [
 
 PARENTS = [-1] + [x[0] for x in SKELETON]
 
+JOINTS_CHILDLINK22 = {
+    15: 'head',
+    0: 'hips',
+    16: 'leftArm',
+    7: 'leftFoot',
+    18: 'leftForeArm',
+    20: 'leftHand',
+    4: 'leftLeg',
+    13: 'leftShoulder',
+    10: 'leftToeBase',
+    1: 'leftUpLeg',
+    12: 'neck',
+    17: 'rightArm',
+    8: 'rightFoot',
+    19: 'rightForeArm',
+    21: 'rightHand',
+    5: 'rightLeg',
+    14: 'rightShoulder',
+    11: 'rightToeBase',
+    2: 'rightUpLeg',
+    3: 'spine',
+    6: 'spine1',
+    9: 'spine2'
+}
+
 def quat_fk(lrot, lpos, parents): ###TODO
     """
     Performs Forward Kinematics (FK) on local quaternions and local positions to retrieve global representations
@@ -168,7 +193,7 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
     loc_joints_pos = res[1]
 
     recover = quat_fk(loc_joints_quat, loc_joints_pos, PARENTS)[1]
-    print(recover-glob_joints_pos) #verified
+    # print(recover-glob_joints_pos) #verified
 
     # print(joints[0])
 
@@ -183,19 +208,43 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
     parts_mesh = list()
     save_dict = dict()
+    bodyparts_CoM = dict()
     for part_idx, (k, v) in enumerate(part_segm.items()):
         mesh = trimesh.Trimesh(vertices[v], process=False)
         _mesh = mesh.convex_hull
         # parts_mesh.append(_mesh)
+        _CoM = _mesh.center_mass #globol position
+        bodyparts_CoM[k] = _CoM
+        _mesh.vertices -= _CoM #align the CoM to origin
         save_dict[k] = _mesh
-    
-    joblib.dump(save_dict, './body_parts.pkl')
+    # print(bodyparts_CoM)
+
+    for k, v in JOINTS_CHILDLINK22.items(): #glob2loc
+        # print(torch.from_numpy(bodyparts_CoM[v][None]) - glob_joints_pos[..., k, :])
+        bodyparts_CoM[v] = quaternion_apply(
+                quaternion_invert(glob_joints_quat[..., k, :]),
+                torch.from_numpy(bodyparts_CoM[v][None]) - glob_joints_pos[..., k, :])[0].detach().numpy()
+        # print(bodyparts_CoM[v])
+    # print(bodyparts_CoM)
+        
+
+    for key, m in save_dict.items():
+        m.export('../demo/body_parts_%s.obj' %key)
+
+    # joblib.dump(save_dict, './body_parts.pkl')
     loc_joints_pos = loc_joints_pos.squeeze().detach().numpy()
     loc_joints_axisangle = np.zeros([24,3])
-
-    joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'joints_position': joints,\
+    # print(joints[[0,10,11,15]])
+    # print(loc_joints_pos[0])
+    joblib.dump({'JOINTS_CHILDLINK22': JOINTS_CHILDLINK22, 'bodyparts_CoM': bodyparts_CoM, 'loc_angle': 0}, './links_info.pkl')
+    joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'glob_joints_position': joints,\
          'loc_joints_pos': loc_joints_pos, 'loc_joints_axisangle': loc_joints_axisangle, 'parents':PARENTS}, \
         './joints_info.pkl')
+
+    # parts = joblib.load('./body_parts.pkl')
+    # os.makedirs('../demo', exist_ok=True)
+    # for key, m in parts.items():
+    #     m.export('../demo/body_parts_%s.stl' %key)
     # parts_mesh = joblib.load('./body_parts.pkl').values()
     # for idx, m in enumerate(parts_mesh):
     #     m.export('../demo/body_parts_%d.stl' %idx)

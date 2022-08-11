@@ -11,7 +11,7 @@ if __name__ == '__main__':
     # hands_pose = np.zeros([1,6]) #set hand pose to zeros 
     raw_amass_path = '/Users/yuxuanmu/project/amass_data'
     body_model_path='/Users/yuxuanmu/project/smpl_model/models'
-    fps = 20.
+    fps = 999#20.
     count = 0
     
     zup2yup = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
@@ -23,10 +23,13 @@ if __name__ == '__main__':
         p[0] = p[0].replace('amass_data', 'amass_data_unified_%d_yup' %fps)
         f_d = np.load(f_path)
         current_fps = f_d['mocap_framerate'] #60,100,120,250
-        if np.round(current_fps) % fps > 0.01:
-            print(current_fps)
-            continue
-        sample_rate = int(current_fps // fps)
+        if fps == 999:
+            sample_rate = 1
+        else:
+            if np.round(current_fps) % fps > 0.01:
+                print(current_fps)
+                continue
+            sample_rate = int(current_fps // fps)
         trans = f_d['trans'][::sample_rate][:-1] # z upper 
         # print(np.var(trans[:,2]))
         poses = f_d['poses'][::sample_rate][:-1]
@@ -62,7 +65,10 @@ if __name__ == '__main__':
         # body_model = smplx.create(model_path=body_model_path, model_type='smpl', betas=betas[None], global_orient=poses[:1, :3], body_pose=poses[:1, 3:])
         # joints = body_model().joints.detach().numpy()[0, np.array([10,11,15])] + trans[0]
         # print(joints)
-        np.savez(os.path.join(p[0], p[1]), trans=trans, poses=poses, gender=f_d['gender'], betas=betas, fps=fps)
+        if fps == 999:
+            np.savez(os.path.join(p[0], p[1]), trans=trans, poses=poses, gender=f_d['gender'], betas=betas, fps=current_fps)
+        else:
+            np.savez(os.path.join(p[0], p[1]), trans=trans, poses=poses, gender=f_d['gender'], betas=betas, fps=fps)
         count += 1
     print(count)
         
