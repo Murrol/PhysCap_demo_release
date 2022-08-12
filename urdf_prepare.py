@@ -233,6 +233,7 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
     # joblib.dump(save_dict, './body_parts.pkl')
     loc_joints_pos = loc_joints_pos.squeeze().detach().numpy()
+    print(loc_joints_pos)
     loc_joints_axisangle = np.zeros([24,3])
     # print(joints[[0,10,11,15]])
     # print(loc_joints_pos[0])
