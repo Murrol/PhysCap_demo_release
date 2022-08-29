@@ -233,10 +233,10 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
 
     # joblib.dump(save_dict, './body_parts.pkl')
     loc_joints_pos = loc_joints_pos.squeeze().detach().numpy()
-    print(loc_joints_pos)
+    # print(loc_joints_pos)
     loc_joints_axisangle = np.zeros([24,3])
     # print(joints[[0,10,11,15]])
-    print(loc_joints_pos[0])
+    print(loc_joints_pos[17])
     joblib.dump({'JOINTS_CHILDLINK22': JOINTS_CHILDLINK22, 'bodyparts_CoM': bodyparts_CoM, 'loc_angle': 0}, './links_info.pkl')
     joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'glob_joints_position': joints,\
          'loc_joints_pos': loc_joints_pos, 'loc_joints_axisangle': loc_joints_axisangle, 'parents':PARENTS}, \

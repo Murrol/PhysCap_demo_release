@@ -45,7 +45,7 @@ def sim_loop(path_dict,floor_known=0):
     print(len(la_po_dic)) #43
     if floor_known:
         # floor = p.loadURDF(path_dict["floor_path"],  [0, 0.0, 0.0],  [-0.7071068, 0, 0, 0.7071068])
-        floor = p.loadURDF(path_dict["floor_path"],  [0, 0.928, 0.0],  [-0.7071068, 0, 0, 0.7071068])
+        floor = p.loadURDF(path_dict["floor_path"],  [0, 0.928, 0.0],  [0.7071068, 0, 0, 0.7071068])
     
     ini = Initializer(floor_known, path_dict["floor_frame"])
     ini.remove_collisions(id_robot, id_robot_vnect) 
