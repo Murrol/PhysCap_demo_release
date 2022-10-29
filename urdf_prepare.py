@@ -204,21 +204,29 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
     They should be: 'nose', 'right_eye', 'left_eye', 'right_ear', 'left_ear', 'left_big_toe', 'left_small_toe', 'left_heel', 'right_big_toe', 'right_small_toe', 'right_heel' and the left, right hand finger tips. For SMPL the latter should not be very useful. You can actually see the order in the vertex_joint_selector script.
     '''
     print(joints.shape)
-    faces = body_model.faces
-
+    faces = body_model.faces #(13776, 3)
+    mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
     parts_mesh = list()
     save_dict = dict()
     bodyparts_CoM = dict()
     for part_idx, (k, v) in enumerate(part_segm.items()):
-        mesh = trimesh.Trimesh(vertices[v], process=False)
-        _mesh = mesh.convex_hull
+        tempmesh = trimesh.Trimesh(vertices[v], process=False)
+        _mesh_watertight = tempmesh.convex_hull
+
+        faces_flatten = faces.flatten()
+        faces_mask = np.in1d(faces_flatten, v)
+        faces_mask = faces_mask.reshape(-1, 3)
+        faces_mask = np.sum(faces_mask, axis=-1)
+        faces_mask_idx = np.flatnonzero(faces_mask)
+        # print(faces_mask_idx)
+        _mesh = mesh.submesh(faces_mask_idx[None], append=True)
         # parts_mesh.append(_mesh)
-        _CoM = _mesh.center_mass #globol position
+        _CoM = _mesh_watertight.center_mass #globol position
         bodyparts_CoM[k] = _CoM
         _mesh.vertices -= _CoM #align the CoM to origin
         save_dict[k] = _mesh
     # print(bodyparts_CoM)
-
+    # return
     for k, v in JOINTS_CHILDLINK22.items(): #glob2loc
         # print(torch.from_numpy(bodyparts_CoM[v][None]) - glob_joints_pos[..., k, :])
         bodyparts_CoM[v] = quaternion_apply(
@@ -229,7 +237,7 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
         
 
     for key, m in save_dict.items():
-        m.export('../demo/body_parts_%s.obj' %key)
+        m.export('../demo/body_parts_%s_vis.obj' %key)
 
     # joblib.dump(save_dict, './body_parts.pkl')
     loc_joints_pos = loc_joints_pos.squeeze().detach().numpy()
@@ -237,10 +245,11 @@ def main(body_model='smpl', body_model_path='/home/datassd/yuxuan/smpl_model/mod
     loc_joints_axisangle = np.zeros([24,3])
     # print(joints[[0,10,11,15]])
     print(loc_joints_pos[17])
-    joblib.dump({'JOINTS_CHILDLINK22': JOINTS_CHILDLINK22, 'bodyparts_CoM': bodyparts_CoM, 'loc_angle': 0}, './links_info.pkl')
-    joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'glob_joints_position': joints,\
-         'loc_joints_pos': loc_joints_pos, 'loc_joints_axisangle': loc_joints_axisangle, 'parents':PARENTS}, \
-        './joints_info.pkl')
+
+    # joblib.dump({'JOINTS_CHILDLINK22': JOINTS_CHILDLINK22, 'bodyparts_CoM': bodyparts_CoM, 'loc_angle': 0}, './links_info.pkl')
+    # joblib.dump({'skeleton': np.array(SKELETON), 'joints_name': SMPL_JOINT_NAMES, 'glob_joints_position': joints,\
+    #      'loc_joints_pos': loc_joints_pos, 'loc_joints_axisangle': loc_joints_axisangle, 'parents':PARENTS}, \
+    #     './joints_info.pkl')
 
     # parts = joblib.load('./body_parts.pkl')
     # os.makedirs('../demo', exist_ok=True)
